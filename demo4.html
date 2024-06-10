@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Responsive Layout</title>
+<style>
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+#square {
+    background-color: #201F1E;
+    flex-shrink: 0;
+    container-type: inline-size;
+    container-name: square;
+}
+
+#filler {
+    background-color: blue;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.content {
+    height: 100px;
+    margin: 10px;
+    background-color: white;
+    border: 1px solid black;
+}
+
+/* Landscape orientation */
+@media (orientation: landscape) {
+    body {
+        flex-direction: row;
+    }
+
+    #square {
+        width: calc(100vh); /* Subtracting margin or padding if any */
+        height: calc(100vh);
+    }
+
+    #filler {
+        width: calc(100vw - 100vh);
+        height: 100vh;
+    }
+}
+
+/* Portrait orientation */
+@media (orientation: portrait) {
+    #square {
+        width: 100vw;
+        height: 100vw; /* Same as the width to maintain square */
+    }
+
+    #filler {
+        height: calc(100vh - 100vw); /* Subtracting the height of the square */
+    }
+}
+
+.circle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 50%; /* relative size of the circle to the square */
+    aspect-ratio: 1/1; /* keeps the circle shape */
+    background-color: transparent;
+    border: 0.4cqw solid #B94909;
+    border-radius: 50%;
+}
+.circle>.label {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: translate(-50%, -50%);
+    background-color: #201F1E;
+    color: #B94909;
+    padding: 1%;
+    font-size: 3cqw;
+}
+.point{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 3%;
+    aspect-ratio: 1/1; 
+    background-color: #201F1E;
+    border: 0.4cqw solid #B94909;
+    border-radius: 50%;
+    z-index: 1;
+}
+.point:hover{
+    z-index: 2;
+    background-color: #B94909;
+}
+.point>.label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transform-origin: 0 0;
+    background-color: transparent;
+    color: #B94909;
+    padding: 1%;
+    font-size: 2cqw;
+}
+.point>.label>div{
+    white-space: nowrap;
+}
+.point>.label>div>div{
+    margin-left: 13cqw;
+}
+.point>.label>div>.name{
+    font-weight: bold;
+}
+.line{
+    position: absolute;
+    width: 0;
+    aspect-ratio: 1/1; 
+    background-color: transparent;
+    transform-origin: 0 0;
+    border-top: 0.4cqw solid #B94909;
+}
+
+
+</style>
+</head>
+<body>
+    <div id="square">
+        <div class="circle" style="width:80%"><div class="label">90°</div></div>
+    </div>
+    <div id="filler">
+        <div class="content">Content 1</div>
+        <div class="content">Content 2</div>
+        <div class="content">Content 3</div>
+        <div class="content">Content 4</div>
+        <div class="content">Content 5</div>
+        <div class="content">Content 6</div>
+    </div>
+    <script>
+        // circle radii
+        const radii=[
+            90, 60, 45, 30, 15
+        ]
+        const points = [
+            {radius: 90, theta: 0, label: "r90°, t0°"},
+            {radius: 60, theta: 15, label: "r60°, t15°"},
+            {radius: 45, theta: 30, label: "r45°, t30°"},
+            {radius: 30, theta: 45, label: "r30°, t45°"},
+            {radius: 15, theta: 60, label: "r15°, t60°"},
+            {radius: 0, theta: 75, label: "r0°, t75°"},
+            {radius: 90, theta: 90, label: "r90°, t90°"},
+            {radius: 60, theta: 105, label: "r60°, t105°"},
+            {radius: 45, theta: 120, label: "r45°, t120°"},
+            {radius: 30, theta: 135, label: "r30°, t135°"},
+            {radius: 15, theta: 150, label: "r15°, t150°"},
+            {radius: 0, theta: 165, label: "r0°, t165°"},
+            {radius: 90, theta: 180, label: "r90°, t180°"},
+            {radius: 60, theta: 195, label: "r60°, t195°"},
+            {radius: 45, theta: 210, label: "r45°, t210°"},
+            {radius: 30, theta: 225, label: "r30°, t225°"},
+            {radius: 15, theta: 240, label: "r15°, t240°"},
+            {radius: 0, theta: 255, label: "r0°, t255°"},
+            {radius: 90, theta: 270, label: "r90°, t270°"},
+            {radius: 60, theta: 285, label: "r60°, t285°"},
+            {radius: 45, theta: 300, label: "r45°, t300°"},
+            {radius: 30, theta: 315, label: "r30°, t315°"},
+            {radius: 15, theta: 330, label: "r15°, t330°"},
+            
+        ]
+        const lines = [
+            {start: {radius: 90, theta: 0}, end: {radius: 60, theta: 15}},
+            {start: {radius: 60, theta: 15}, end: {radius: 45, theta: 30}},
+            {start: {radius: 45, theta: 30}, end: {radius: 30, theta: 45}},
+            {start: {radius: 30, theta: 45}, end: {radius: 15, theta: 60}},
+            {start: {radius: 15, theta: 60}, end: {radius: 0, theta: 75}},
+            {start: {radius: 0, theta: 75}, end: {radius: 90, theta: 90}},
+            {start: {radius: 90, theta: 90}, end: {radius: 60, theta: 105}},
+            {start: {radius: 60, theta: 105}, end: {radius: 45, theta: 120}},
+            {start: {radius: 45, theta: 120}, end: {radius: 30, theta: 135}},
+            {start: {radius: 30, theta: 135}, end: {radius: 15, theta: 150}},
+            {start: {radius: 15, theta: 150}, end: {radius: 0, theta: 165}},
+            {start: {radius: 0, theta: 165}, end: {radius: 90, theta: 180}},
+            {start: {radius: 90, theta: 180}, end: {radius: 60, theta: 195}},
+            {start: {radius: 60, theta: 195}, end: {radius: 45, theta: 210}},
+            {start: {radius: 45, theta: 210}, end: {radius: 30, theta: 225}},
+        ]
+        const max_width=80;
+        radii.forEach((radius, i)=>{
+            const circle=document.createElement('div');
+            const width = (polarToCartesian(radius, 90).top)*max_width;
+            console.log(width);
+            circle.classList.add('circle');
+            circle.style.width=`${width}%`;
+            circle.innerHTML=`<div class="label">${radius}°</div>`;
+            document.getElementById('square').appendChild(circle);
+        });
+
+        points.forEach((point, i)=>{
+            const point_div=document.createElement('div');
+            const {top, left} = polarToCartesian(point.radius, point.theta);
+            point_div.classList.add('point');
+            point_div.style.top=`${left*0.5*max_width+50}%`;
+            point_div.style.left=`${top*0.5*max_width+50}%`;
+            point_div.innerHTML=`<div class="label"><div style="transform: rotate(${point.theta-90}deg)"><div class="name">name</div><div class="coord">${point.label}</div></div></div>`;
+            document.getElementById('square').appendChild(point_div);
+        });
+
+        lines.forEach((line, i)=>{
+            const line_div=document.createElement('div');
+            const {top: top1, left: left1} = polarToCartesian(line.start.radius, line.start.theta);
+            const {top: top2, left: left2} = polarToCartesian(line.end.radius, line.end.theta);
+            line_div.classList.add('line');
+            line_div.style.top=`${left1*0.5*max_width+50}%`;
+            line_div.style.left=`${top1*0.5*max_width+50}%`;
+            const width = Math.sqrt((top2-top1)**2+(left2-left1)**2)*0.5*max_width;
+            line_div.style.width=`${width}%`;
+            const localtheta = Math.atan2(left2-left1, top2-top1)*180/Math.PI;
+            line_div.style.transform = `rotate(${localtheta}deg) translate(0, -0.2cqw)`;
+            line_div.innerHTML=`<div class="actual"></div>`;
+            document.getElementById('square').appendChild(line_div);
+        });
+
+
+        function polarToCartesian(radius, theta){
+            // radius and theta in degrees
+            // returns top and left in percentage
+            // 0° radius would be 50% top and 50% left
+            // 90° radius would be max_width-50 top and 50% left
+
+            // convert theta and radius to radians
+            const theta_r=(theta-90)*Math.PI/180;
+            const radius_r=radius*Math.PI/180;
+
+            const radius_factor = Math.sin(radius_r);
+            console.log("rf", radius_factor);
+
+            const top = Math.cos(theta_r)*radius_factor;
+            const left = Math.sin(theta_r)*radius_factor;
+
+            return {
+                top: top,
+                left: left
+            }
+        }
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Responsive Layout</title>
+<style>
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+#square {
+    background-color: #201F1E;
+    flex-shrink: 0;
+    container-type: inline-size;
+    container-name: square;
+}
+
+#filler {
+    background-color: blue;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.content {
+    margin: 10px;
+    background-color: white;
+    border: 1px solid black;
+}
+
+/* Landscape orientation */
+@media (orientation: landscape) {
+    body {
+        flex-direction: row;
+    }
+
+    #square {
+        width: calc(100vh); /* Subtracting margin or padding if any */
+        height: calc(100vh);
+    }
+
+    #filler {
+        width: calc(100vw - 100vh);
+        height: 100vh;
+    }
+}
+
+/* Portrait orientation */
+@media (orientation: portrait) {
+    #square {
+        width: 100vw;
+        height: 100vw; /* Same as the width to maintain square */
+    }
+
+    #filler {
+        height: calc(100vh - 100vw); /* Subtracting the height of the square */
+    }
+}
+
+.circle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 50%; /* relative size of the circle to the square */
+    aspect-ratio: 1/1; /* keeps the circle shape */
+    background-color: transparent;
+    border: 0.4cqw solid #B94909;
+    border-radius: 50%;
+}
+.circle>.label {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: translate(-50%, -50%);
+    background-color: #201F1E;
+    color: #B94909;
+    padding: 1%;
+    font-size: 3cqw;
+}
+.point{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 3%;
+    aspect-ratio: 1/1; 
+    background-color: #201F1E;
+    border: 0.4cqw solid #B94909;
+    border-radius: 50%;
+    z-index: 2;
+}
+.point:hover{
+    z-index: 3;
+    background-color: #B94909;
+    box-shadow: inset #201F1E 0 0 0 0.5cqw;
+}
+.point.clicked,
+.pont.clicked:hover{
+    z-index: 3;
+    background-color: #B94909;
+    box-shadow: none;
+}	
+.point>.label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: transparent;
+    color: #B94909;
+    padding: 1%;
+    font-size: 2cqw;
+}
+.point:hover>.label>div>div,
+.point.clicked>.label>div>div{
+    z-index: 3;
+    background-color: #201F1E;
+    text-decoration: underline;
+}
+.point>.label>div{
+    position: absolute;
+    white-space: nowrap;
+    transform-origin: 0 0;
+}
+.point>.label>div>div{
+    transform: translate(29%, -50%);
+    display: flex;
+    flex-direction: column;
+}
+.point>.label.flip>div>div{
+    flex-direction: column-reverse;
+}
+.point>.label.flip>div>div>div{
+    transform: rotate(180deg);
+    text-align: right;
+}
+    
+
+.point>.label>div>div>.name{
+    font-weight: bold;
+}
+.line{
+    position: absolute;
+    width: 0;
+    aspect-ratio: 1/1; 
+    background-color: transparent;
+    transform-origin: 0 0;
+    border-top: 0.4cqw solid #B94909;
+}
+
+
+</style>
+</head>
+<body>
+    <div id="square">
+        <div class="circle" style="width:80%"><div class="label">90°</div></div>
+    </div>
+    <div id="filler">
+        <div class="content target">locked: none</div>
+        <div class="content selected">active: none</div>
+    </div>
+    <script src="dogfood.js"></script>
+    <script src="tools/hierarchy.js"></script>
+    <script>
+        // dogfood is a little screwed up, so we need to fix it
+        dogfood.forEach((item, i)=>{
+            item.vector = item.vector[0]
+        });
+        console.log(dogfood[5]);
+        const data = dogfood;
+        window.dogfood = dogfood;
+        window.buildHierarchyCorrectedAndSorted = buildHierarchyCorrectedAndSorted;
+        /*
+        type DataObject = {
+            label: string;
+            vector: number[];
+            timestamp: number;
+            data: string;
+        }[];
+        */
+       // add all data to the filler list
+        data.forEach((item, i)=>{
+            const content = document.createElement('div');
+            content.classList.add('content');
+            content.innerHTML=`<span class="label">${item.label}</span><div class="data">${item.data}</div>`;
+            document.getElementById('filler').appendChild(content);
+        });
+
+        let center = data[0].vector;
+        let targetTheta = 90;
+        let hierarchy = buildHierarchyCorrectedAndSorted( {vector: center}, data);
+        console.log("hierarchy", hierarchy);
+
+
+        // setup
+        const radii=[
+            90, 60, 45, 30, 15
+        ]
+        const max_width=80;
+        radii.forEach((radius, i)=>{
+            const circle=document.createElement('div');
+            const width = (polarToCartesian(radius, 90).top)*max_width;
+            console.log(width);
+            circle.classList.add('circle');
+            circle.style.width=`${width}%`;
+            circle.innerHTML=`<div class="label">${radius}°</div>`;
+            document.getElementById('square').appendChild(circle);
+        });
+
+        // data 
+        /*
+        type Hierarchy{
+            children: Hierarchy[];
+            cosine_similarity: number;
+            data: string;
+            label: string;
+            radius: number;
+            theta: number;
+            timestamp: number;
+            vector: number[];
+        }
+        */
+
+        // draw the hierarchy
+        let totalrotation = 0;
+        function drawHierarchy(hierarchy, thetaOffset, extrarotation=0){
+            const radius = hierarchy.radius;
+            const theta = hierarchy.theta+thetaOffset ;
+            const point = {radius, theta: theta + extrarotation, label: hierarchy.label, cosine_similarity: hierarchy.cosine_similarity, data: hierarchy.data, vector: hierarchy.vector};
+            drawPoint(point);
+            if(hierarchy.children){
+                hierarchy.children.forEach((child)=>{
+                    const line = {start: {radius, theta: theta + extrarotation}, end: {radius: child.radius, theta: child.theta + theta + extrarotation}};
+                    drawLine(line);
+                    drawHierarchy(child, theta, extrarotation);
+                });
+            }
+        }
+        hierarchy.forEach((hierarchy)=>{
+            drawHierarchy(hierarchy, 0);
+        });
+
+
+        function selectedPoint(point){
+            // write into the active content
+            document.querySelector('.content.selected').innerHTML=`<span class="label">${point.label}</span><div class="data">r${point.radius.toFixed(2)}, θ${point.theta.toFixed(2)}</div><div class="cosine">cosine_similarity: ${point.cosine_similarity}</div><div class="data">${point.data}</div>`;
+        }
+        function doubleclickPoint(point){
+            // write into the active content
+            document.querySelector('.content.target').innerHTML=`<span class="label">${point.label}</span><div class="data">r${point.radius.toFixed(2)}, θ${point.theta.toFixed(2)}</div><div class="cosine">cosine_similarity: ${point.cosine_similarity}</div><div class="data">${point.data}</div>`;
+
+            // compute a transition path
+            const path = [...interpolate_halves(center, point.vector, 5), point.vector];
+            const frames = path.length; 
+            const paththeta = [... interpolate_halves([0,1], [1,0], 5), point.theta].map(e=>e[0]*(point.theta - totalrotation) + totalrotation); 
+            console.log("paththeta", paththeta);
+            //const path = [...interpolate_linear(center, point.vector, 5), point.vector];
+
+
+            // request animation frame, then recompute hierarchy with new point, draw new hierarchy, and wait for next animation frame until last point is reached
+            let i = 0;
+            function animate(){
+                if(i<path.length){
+                    center = path[i];
+                    hierarchy = buildHierarchyCorrectedAndSorted( {vector: center}, data);
+                    document.getElementById('square').innerHTML="";
+                    radii.forEach((radius, i)=>{
+                        const circle=document.createElement('div');
+                        const width = (polarToCartesian(radius, 90).top)*max_width;
+                        console.log(width);
+                        circle.classList.add('circle');
+                        circle.style.width=`${width}%`;
+                        circle.innerHTML=`<div class="label">${radius}°</div>`;
+                        document.getElementById('square').appendChild(circle);
+                    });
+
+                    console.log("rotation", point.theta)
+
+                    if(i>0 && (paththeta[i] - paththeta[i-1])){
+                        totalrotation = (totalrotation + paththeta[i] - paththeta[i-1])%360;
+                        console.log("totalrotation", totalrotation); 
+                    }
+
+                    hierarchy.forEach((hierarchy)=>{
+                        drawHierarchy(hierarchy, 0, totalrotation); 
+                    });
+                    i++;
+                    requestAnimationFrame(animate);
+                } else {
+                    // cleanup
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+
+        function drawPoint (point) {
+            const point_div=document.createElement('div');
+            const {top, left} = polarToCartesian(point.radius, point.theta);
+            point_div.classList.add('point');
+            point_div.style.top=`${left*0.5*max_width+50}%`;
+            point_div.style.left=`${top*0.5*max_width+50}%`;
+            const flip = point.theta>180 && point.theta<360 ? "flip" : "noflip";
+            point_div.innerHTML=`<div class="label ${flip}"><div style="transform: rotate(${point.theta-90}deg)"><div><div class="name">${point.label}</div><div class="coord">r${point.radius.toFixed(2)}, θ${point.theta.toFixed(2)}</div></div></div></div>`;
+
+            // point clicked toggle "clicked" class
+            let lastClick = 0;
+            point_div.addEventListener('click', function() {
+                // remove clicked from any other point that isnt this
+                document.querySelectorAll('.point').forEach((point)=>{
+                    if(point!=this){
+                        point.classList.remove('clicked');
+                    }
+                });
+
+                // double click
+                const now = new Date().getTime();
+                const timesince = now - lastClick;
+                lastClick = now;
+                if(timesince<300){
+                    doubleclickPoint(point);
+                } else {
+                    this.classList.toggle('clicked');
+                    selectedPoint(point);
+                }
+            });
+
+            document.getElementById('square').appendChild(point_div);
+        };
+
+
+        function drawLine (line) {
+            const line_div=document.createElement('div');
+            const {top: top1, left: left1} = polarToCartesian(line.start.radius, line.start.theta);
+            const {top: top2, left: left2} = polarToCartesian(line.end.radius, line.end.theta);
+            line_div.classList.add('line');
+            line_div.style.top=`${left1*0.5*max_width+50}%`;
+            line_div.style.left=`${top1*0.5*max_width+50}%`;
+            const width = Math.sqrt((top2-top1)**2+(left2-left1)**2)*0.5*max_width;
+            line_div.style.width=`${width}%`;
+            const localtheta = Math.atan2(left2-left1, top2-top1)*180/Math.PI;
+            line_div.style.transform = `rotate(${localtheta}deg) translate(0, -0.2cqw)`;
+            line_div.innerHTML=`<div class="actual"></div>`;
+            document.getElementById('square').appendChild(line_div);
+        };
+
+
+        function polarToCartesian(radius, theta){
+            // radius and theta in degrees
+            // returns top and left in percentage
+            // 0° radius would be 50% top and 50% left
+            // 90° radius would be max_width-50 top and 50% left
+
+            // convert theta and radius to radians
+            const theta_r=(theta-90)*Math.PI/180;
+            const radius_r=radius*Math.PI/180;
+
+            const radius_factor = Math.sin(radius_r);
+            //console.log("rf", radius_factor); 
+
+            const top = Math.cos(theta_r)*radius_factor;
+            const left = Math.sin(theta_r)*radius_factor;
+
+            return {
+                top: top,
+                left: left
+            }
+        }
+
+    </script>
+</body>
+</html>

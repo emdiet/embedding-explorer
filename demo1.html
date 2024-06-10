@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Responsive Layout</title>
+<style>
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+#square {
+    background-color: #201F1E;
+    flex-shrink: 0;
+    container-type: inline-size;
+    container-name: square;
+}
+
+#filler {
+    background-color: blue;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.content {
+    height: 100px;
+    margin: 10px;
+    background-color: white;
+    border: 1px solid black;
+}
+
+/* Landscape orientation */
+@media (orientation: landscape) {
+    body {
+        flex-direction: row;
+    }
+
+    #square {
+        width: calc(100vh); /* Subtracting margin or padding if any */
+        height: calc(100vh);
+    }
+
+    #filler {
+        width: calc(100vw - 100vh);
+        height: 100vh;
+    }
+}
+
+/* Portrait orientation */
+@media (orientation: portrait) {
+    #square {
+        width: 100vw;
+        height: 100vw; /* Same as the width to maintain square */
+    }
+
+    #filler {
+        height: calc(100vh - 100vw); /* Subtracting the height of the square */
+    }
+}
+
+.circle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 50%; /* relative size of the circle to the square */
+    aspect-ratio: 1/1; /* keeps the circle shape */
+    background-color: #B94909;
+    border-radius: 50%;
+}
+.circle>.ic {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 99%; /* relative size of the circle to the square */
+    height: 99%; /* keeps the circle shape */
+    background-color: #201F1E;
+    border-radius: 50%;
+}
+.circle>.label {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: translate(-50%, -50%);
+    background-color: #201F1E;
+    color: #B94909;
+    padding: 1%;
+    border-radius: 50%;
+    font-size: 3cqw;
+}
+
+</style>
+</head>
+<body>
+    <div id="square">
+        <div class="circle" style="width:80%"><div class="ic"></div><div class="label">90°</div></div>
+    </div>
+    <div id="filler">
+        <div class="content">Content 1</div>
+        <div class="content">Content 2</div>
+        <div class="content">Content 3</div>
+        <div class="content">Content 4</div>
+        <div class="content">Content 5</div>
+        <div class="content">Content 6</div>
+    </div>
+    <script>
+        // circle radii
+        const radii=[
+            90, 60, 45, 30, 15
+        ]
+        const max_width=80;
+        radii.forEach((radius, i)=>{
+            const circle=document.createElement('div');
+            const width = (polarToCartesian(radius, 0).top)*max_width;
+            console.log(width);
+            circle.classList.add('circle');
+            circle.style.width=`${width}%`;
+            circle.innerHTML=`<div class="ic"></div><div class="label">${radius}°</div>`;
+            document.getElementById('square').appendChild(circle);
+        });
+
+
+
+        function polarToCartesian(radius, theta){
+            // radius and theta in degrees
+            // returns top and left in percentage
+            // 0° radius would be 50% top and 50% left
+            // 90° radius would be max_width-50 top and 50% left
+
+            // convert theta and radius to radians
+            const theta_r=theta*Math.PI/180;
+            const radius_r=radius*Math.PI/180;
+
+            const radius_factor = Math.sin(radius_r);
+            console.log("rf", radius_factor);
+
+            const top = Math.cos(theta_r)*radius_factor;
+            const left = Math.sin(theta_r)*radius_factor;
+
+            return {
+                top: top,
+                left: left
+            }
+        }
+
+    </script>
+</body>
+</html>
