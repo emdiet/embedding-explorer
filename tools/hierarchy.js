@@ -104,6 +104,9 @@ const vectors = [
 ];
 const hierarchySorted = buildHierarchyCorrectedAndSorted(rootVector, vectors, 0);
 console.log(hierarchySorted);
+function vectorHash(vector) {
+    return vector.vector.join(",");
+}
 function buildHierarchyCorrectedAndSorted(rootVector, vectors, theta) {
     let vectorData = vectors.map(vec => (Object.assign(Object.assign({}, vec), { cosine_similarity: computeCosineSimilarity(rootVector, vec, theta) })));
     vectorData.sort((a, b) => b.cosine_similarity - a.cosine_similarity);

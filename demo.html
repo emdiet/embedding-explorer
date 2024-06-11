@@ -173,13 +173,14 @@ body {
     </div>
     <script src="dogfood.js"></script>
     <script src="tools/hierarchy.js"></script>
+    <script src="tools/ribbonhierarchy.js"></script>
     <script>
         // dogfood is a little screwed up, so we need to fix it
         dogfood.forEach((item, i)=>{
             item.vector = item.vector[0]
         });
         console.log(dogfood[5]);
-        const data = dogfood;
+        //const data = dogfood.slice(15);
         window.dogfood = dogfood;
         window.buildHierarchyCorrectedAndSorted = buildHierarchyCorrectedAndSorted;
         /*
@@ -191,22 +192,12 @@ body {
         }[];
         */
        // add all data to the filler list
-        data.forEach((item, i)=>{
-            const content = document.createElement('div');
-            content.classList.add('content');
-            content.innerHTML=`<span class="label">${item.label}</span><div class="data">${item.data}</div>`;
-            document.getElementById('filler').appendChild(content);
-        });
 
-        let center = data[0].vector;
-        let targetTheta = 90;
-        let hierarchy = buildHierarchyCorrectedAndSorted( {vector: center}, data);
-        console.log("hierarchy", hierarchy);
 
 
         // setup
         const radii=[
-            90, 60, 45, 30, 15
+            75, 90, 60, 45, 30, 15
         ]
         const max_width=80;
         radii.forEach((radius, i)=>{
@@ -218,6 +209,61 @@ body {
             circle.innerHTML=`<div class="label">${radius}°</div>`;
             document.getElementById('square').appendChild(circle);
         });
+
+        // test:
+        testData = [
+            {label: "A",  data: "A data", vector: [0.9, 0.1]},
+            {label: "B",  data: "B data", vector: [0.8, 0.2]},
+            {label: "C",  data: "C data", vector: [0.7, 0.3]},
+            {label: "D",  data: "D data", vector: [0.6, 0.4]},
+            {label: "E",  data: "E data", vector: [0.5, 0.5]},
+            {label: "F",  data: "F data", vector: [0.4, 0.6]},
+            {label: "G",  data: "G data", vector: [0.3, 0.7]},
+            {label: "H", data: "H data", vector: [0.2, 0.8]},
+            {label: "I",  data: "I data", vector: [0.1, 0.9]},
+            {label: "J",  data: "J data", vector: [0.0, 1.0]},
+
+            {label: "K",  data: "K data", vector: [-0.1, 0.9]},
+            {label: "L",  data: "L data", vector: [-0.2, 0.8]},
+            {label: "M",  data: "M data", vector: [-0.3, 0.7]},
+            {label: "N",  data: "N data", vector: [-0.4, 0.6]},
+            {label: "O",  data: "O data", vector: [-0.5, 0.5]},
+            {label: "P",  data: "P data", vector: [-0.6, 0.4]},
+            {label: "Q",  data: "Q data", vector: [-0.7, 0.3]},
+            {label: "R",  data: "R data", vector: [-0.8, 0.2]},
+            {label: "S",  data: "S data", vector: [-0.9, 0.1]},
+            {label: "T",  data: "T data", vector: [-1.0, 0.0]},
+
+            {label: "U",  data: "U data", vector: [-0.9, -0.1]},
+            {label: "V",  data: "V data", vector: [-0.8, -0.2]},
+            {label: "W",  data: "W data", vector: [-0.7, -0.3]},
+            {label: "X",  data: "X data", vector: [-0.6, -0.4]},
+            {label: "Y",  data: "Y data", vector: [-0.5, -0.5]},
+            {label: "Z",  data: "Z data", vector: [-0.4, -0.6]},
+            {label: "AA",  data: "AA data", vector: [-0.3, -0.7]},
+            {label: "AB",  data: "AB data", vector: [-0.2, -0.8]},
+            {label: "AC",  data: "AC data", vector: [-0.1, -0.9]},
+            {label: "AD",  data: "AD data", vector: [0.0, -1.0]},
+        ]
+
+        const data = dogfood; 
+
+
+        let center = data[0].vector;
+        let targetTheta = 90;
+        let hierarchy = createRibbonHierarchy( center, data);
+        console.log("hierarchy", hierarchy);
+
+
+        // set up sidebar
+        data.forEach((item, i)=>{
+            const content = document.createElement('div');
+            content.classList.add('content');
+            content.innerHTML=`<span class="label">${item.label}</span><div class="data">${item.data}</div>`;
+            document.getElementById('filler').appendChild(content);
+        });
+
+
 
         // data 
         /*
@@ -235,21 +281,29 @@ body {
 
         // draw the hierarchy
         let totalrotation = 0;
-        function drawHierarchy(hierarchy, thetaOffset, extrarotation=0){
-            const radius = hierarchy.radius;
-            const theta = hierarchy.theta+thetaOffset ;
-            const point = {radius, theta: theta + extrarotation, label: hierarchy.label, cosine_similarity: hierarchy.cosine_similarity, data: hierarchy.data, vector: hierarchy.vector};
-            drawPoint(point);
-            if(hierarchy.children){
-                hierarchy.children.forEach((child)=>{
-                    const line = {start: {radius, theta: theta + extrarotation}, end: {radius: child.radius, theta: child.theta + theta + extrarotation}};
+        const  drawnSoFar = [];
+        function drawHierarchy(hierarchy){
+            //console.log("drawing hierarchy", hierarchy) 
+            const vector = hierarchy;
+            drawnSoFar.push(vector);
+            const radius = vector.radius; 
+            const theta = vector.theta;
+            const point = {radius, theta, label: vector.label, cosine_similarity: vector.cosine_similarity, data: vector.data, vector: vector.vector};
+            //console.log("drawing point", point) 
+            drawPoint(point); 
+            if(vector.neighbors){
+                vector.neighbors.forEach((neighbor)=>{
+                    const line = {start: {radius, theta: theta}, end: {radius: neighbor.vector.radius, theta: neighbor.vector.theta}};
                     drawLine(line);
-                    drawHierarchy(child, theta, extrarotation);
+                    // if not in drawnsofar, draw
+                    if(!drawnSoFar.includes(neighbor.vector)){ 
+                        drawHierarchy(neighbor.vector);
+                    }
                 });
             }
         }
         hierarchy.forEach((hierarchy)=>{
-            drawHierarchy(hierarchy, 0);
+            drawHierarchy(hierarchy, 0); 
         });
 
 
@@ -278,7 +332,8 @@ body {
                 if(i<path.length){
                     center = path[i];
                     data.forEach(e => e.children=[])
-                    hierarchy = buildHierarchyCorrectedAndSorted( {vector: center}, data);
+                    hierarchy = createRibbonHierarchy(  center, data);
+                    console.log("hierarchy", hierarchy);
                     document.getElementById('square').innerHTML="";
                     radii.forEach((radius, i)=>{
                         const circle=document.createElement('div');

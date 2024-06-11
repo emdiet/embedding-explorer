@@ -143,50 +143,8 @@ function vectorHash(vector: Vector): string {
     return vector.vector.join(",");
 }
 
-const cosimTable = new Map<string, number>();
-function memoCosim(v1: Vector, v2: Vector, memo=true): number {
-    const h1 = vectorHash(v1);
-    const h2 = vectorHash(v2);
-    // key is (smaller hash):(bigger hash)
-    const key = h1 < h2 ? `${h1}:${h2}` : `${h2}:${h1}`;
-    if (cosimTable.has(key)) {
-        return cosimTable.get(key)!;
-    }
-    const cosim = computeCosineSimilarity(v1, v2, 0);
-    if (memo)
-        cosimTable.set(key, cosim);
-    return cosim;
-}
 
-
-function buildHierarchyCorrectedAndSorted(rootVector: Vector, vectors: Vector[], memo=false): Vector[] {
-    let epsilon = 0.0000001;
-    
-    let vectorData = vectors.map(vec => ({
-        vector: vec,
-        delta: memoCosim(rootVector, vec, memo) - 1,	
-        children: []
-    })).sort((a, b) => b.delta! - a.delta!);
-
-    let finalStructure: Vector[] = [];
-
-    for(let i = 0; i < vectorData.length; i++){
-        vectorData[i].children = [];
-        // if the cosine similarity -1 is less than epsilon, put it into final structure and continue
-        if(vectorData[i].cosine_similarity! < -1 + epsilon){
-            finalStructure.push(vectorData[i]);
-            continue;
-        }
-
-        // 
-
-    }
-
-
-    return finalStructure;
-}
-
-function buildHierarchyCorrectedAndSorted_original(rootVector: Vector, vectors: Vector[], theta: number): Vector[] {
+function buildHierarchyCorrectedAndSorted(rootVector: Vector, vectors: Vector[], theta: number): Vector[] {
     let vectorData = vectors.map(vec => ({
         ...vec,
         cosine_similarity: computeCosineSimilarity(rootVector, vec, theta)
