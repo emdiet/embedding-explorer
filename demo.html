@@ -156,6 +156,9 @@ body {
     transform-origin: 0 0;
     border-top: 0.4cqw solid #B94909;
 }
+.line.dashed{
+    border-top: 0.4cqw dashed #B94909;
+}
 
 
 </style>
@@ -255,6 +258,9 @@ body {
             document.querySelector('.content.selected').innerHTML=`<span class="label">${point.label}</span><div class="data">r${point.radius.toFixed(2)}, θ${point.theta.toFixed(2)}</div><div class="cosine">cosine_similarity: ${point.cosine_similarity}</div><div class="data">${point.data}</div>`;
         }
         function doubleclickPoint(point){
+            let lastActivePoint = (hierarchy[0].cosine_similarity>=0.999999) ? hierarchy[0] : null;
+
+
             // write into the active content
             document.querySelector('.content.target').innerHTML=`<span class="label">${point.label}</span><div class="data">r${point.radius.toFixed(2)}, θ${point.theta.toFixed(2)}</div><div class="cosine">cosine_similarity: ${point.cosine_similarity}</div><div class="data">${point.data}</div>`;
 
@@ -271,6 +277,7 @@ body {
             function animate(){
                 if(i<path.length){
                     center = path[i];
+                    data.forEach(e => e.children=[])
                     hierarchy = buildHierarchyCorrectedAndSorted( {vector: center}, data);
                     document.getElementById('square').innerHTML="";
                     radii.forEach((radius, i)=>{
@@ -289,10 +296,19 @@ body {
                         totalrotation = (totalrotation + paththeta[i] - paththeta[i-1])%360;
                         console.log("totalrotation", totalrotation); 
                     }
-
                     hierarchy.forEach((hierarchy)=>{
                         drawHierarchy(hierarchy, 0, totalrotation); 
                     });
+                    if(lastActivePoint){
+                        // flatten hierarchy
+                        const flat = flattenHierarchy(hierarchy);
+                        const last = flat.find((e)=>e.label==lastActivePoint.label);
+                        const current = flat.find((e)=>e.label==point.label);
+                        const line = {start: {radius: last.radius, theta: (last.theta + totalrotation)%360 }, end: {radius: current.radius, theta: (current.theta + totalrotation)%360}};
+                        drawLine(line, ['dashed']); 
+                        console.log("drawing line", line, "from", last, "to", current); 
+                    }
+
                     i++;
                     requestAnimationFrame(animate);
                 } else {
@@ -337,7 +353,7 @@ body {
         };
 
 
-        function drawLine (line) {
+        function drawLine (line, classList=[]) {
             const line_div=document.createElement('div');
             const {top: top1, left: left1} = polarToCartesian(line.start.radius, line.start.theta);
             const {top: top2, left: left2} = polarToCartesian(line.end.radius, line.end.theta);
@@ -349,6 +365,7 @@ body {
             const localtheta = Math.atan2(left2-left1, top2-top1)*180/Math.PI;
             line_div.style.transform = `rotate(${localtheta}deg) translate(0, -0.2cqw)`;
             line_div.innerHTML=`<div class="actual"></div>`;
+            line_div.classList.add(...classList);
             document.getElementById('square').appendChild(line_div);
         };
 

@@ -112,7 +112,7 @@ function buildHierarchyCorrectedAndSorted(rootVector, vectors, theta) {
         if (vec.cosine_similarity > 1 || vec.cosine_similarity < -1) {
             console.log(`arccos out of range: ${vec.cosine_similarity}, elem: ${vec.label}`);
             // check if we're very close to one or negative one, then set it to one or negative one
-            const sigma = 0.00001;
+            const sigma = 0.0000001;
             if (vec.cosine_similarity > 1 - sigma) {
                 vec.cosine_similarity = 1;
             }
@@ -149,5 +149,15 @@ function buildHierarchyCorrectedAndSorted(rootVector, vectors, theta) {
         }
     });
     return finalStructure;
+}
+function flattenHierarchy(hierarchy) {
+    let flatHierarchy = [];
+    hierarchy.forEach(node => {
+        flatHierarchy.push(node);
+        if (node.children && node.children.length > 0) {
+            flatHierarchy = flatHierarchy.concat(flattenHierarchy(node.children));
+        }
+    });
+    return flatHierarchy;
 }
 //# sourceMappingURL=hierarchy.js.map
