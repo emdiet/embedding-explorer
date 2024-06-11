@@ -212,41 +212,44 @@ body {
 
         // test:
         testData = [
-            {label: "A",  data: "A data", vector: [0.9, 0.1]},
-            {label: "B",  data: "B data", vector: [0.8, 0.2]},
-            {label: "C",  data: "C data", vector: [0.7, 0.3]},
-            {label: "D",  data: "D data", vector: [0.6, 0.4]},
-            {label: "E",  data: "E data", vector: [0.5, 0.5]},
-            {label: "F",  data: "F data", vector: [0.4, 0.6]},
-            {label: "G",  data: "G data", vector: [0.3, 0.7]},
-            {label: "H", data: "H data", vector: [0.2, 0.8]},
-            {label: "I",  data: "I data", vector: [0.1, 0.9]},
-            {label: "J",  data: "J data", vector: [0.0, 1.0]},
+            {label: "A",  data: "A data", vector: [0, 0 , 0, 1], timestamp: 0},
+            {label: "B",  data: "B data", vector: [0, 0 , 1, 0], timestamp: 0},
+            {label: "C",  data: "C data", vector: [0, 1 , 0, 0], timestamp: 0},
+            {label: "D",  data: "D data", vector: [1, 0 , 0, 0], timestamp: 0},
+            {label: "E",  data: "E data", vector: [0, 0 , 0.9, 0.1], timestamp: 0},
+            {label: "F",  data: "F data", vector: [0, 0 , 0.8, 0.2], timestamp: 0},
+            {label: "G",  data: "G data", vector: [0, 0 , 0.7, 0.3], timestamp: 0},
+            {label: "H",  data: "H data", vector: [0, 0 , 0.6, 0.4], timestamp: 0},
+            {label: "I",  data: "I data", vector: [0, 0 , 0.5, 0.5], timestamp: 0},
+            {label: "J",  data: "J data", vector: [0, 0 , 0.4, 0.6], timestamp: 0},
+            {label: "K",  data: "K data", vector: [0, 0 , 0.3, 0.7], timestamp: 0},
+            {label: "L",  data: "L data", vector: [0, 0 , 0.2, 0.8], timestamp: 0},
+            {label: "M",  data: "M data", vector: [0, 0 , 0.1, 0.9], timestamp: 0},
+            {label: "N",  data: "N data", vector: [0, 0.9, 0.1, 0], timestamp: 0},
+            {label: "O",  data: "O data", vector: [0, 0.8, 0.2, 0], timestamp: 0},
+            {label: "P",  data: "P data", vector: [0, 0.7, 0.3, 0], timestamp: 0},
+            {label: "Q",  data: "Q data", vector: [0, 0.6, 0.4, 0], timestamp: 0},
+            {label: "R",  data: "R data", vector: [0, 0.5, 0.5, 0], timestamp: 0},
+            {label: "S",  data: "S data", vector: [0, 0.4, 0.6, 0], timestamp: 0},
+            {label: "T",  data: "T data", vector: [0, 0.3, 0.7, 0], timestamp: 0},
+            {label: "U",  data: "U data", vector: [0, 0.2, 0.8, 0], timestamp: 0},
+            {label: "V",  data: "V data", vector: [0, 0.1, 0.9, 0], timestamp: 0},
+            {label: "W",  data: "W data", vector: [0.9, 0, 0.1, 0], timestamp: 0},
+            {label: "X",  data: "X data", vector: [0.8, 0, 0.2, 0], timestamp: 0},
+            {label: "Y",  data: "Y data", vector: [0.7, 0, 0.3, 0], timestamp: 0},
+            {label: "Z",  data: "Z data", vector: [0.6, 0, 0.4, 0], timestamp: 0},
+            {label: "AA",  data: "AA data", vector: [0.5, 0, 0.5, 0], timestamp: 0},
+            {label: "AB",  data: "AB data", vector: [0.4, 0, 0.6, 0], timestamp: 0},
+            {label: "AC",  data: "AC data", vector: [0.3, 0, 0.7, 0], timestamp: 0},
+            {label: "AD",  data: "AD data", vector: [0.2, 0, 0.8, 0], timestamp: 0},
+            {label: "AE",  data: "AE data", vector: [0.1, 0, 0.9, 0], timestamp: 0},
 
-            {label: "K",  data: "K data", vector: [-0.1, 0.9]},
-            {label: "L",  data: "L data", vector: [-0.2, 0.8]},
-            {label: "M",  data: "M data", vector: [-0.3, 0.7]},
-            {label: "N",  data: "N data", vector: [-0.4, 0.6]},
-            {label: "O",  data: "O data", vector: [-0.5, 0.5]},
-            {label: "P",  data: "P data", vector: [-0.6, 0.4]},
-            {label: "Q",  data: "Q data", vector: [-0.7, 0.3]},
-            {label: "R",  data: "R data", vector: [-0.8, 0.2]},
-            {label: "S",  data: "S data", vector: [-0.9, 0.1]},
-            {label: "T",  data: "T data", vector: [-1.0, 0.0]},
 
-            {label: "U",  data: "U data", vector: [-0.9, -0.1]},
-            {label: "V",  data: "V data", vector: [-0.8, -0.2]},
-            {label: "W",  data: "W data", vector: [-0.7, -0.3]},
-            {label: "X",  data: "X data", vector: [-0.6, -0.4]},
-            {label: "Y",  data: "Y data", vector: [-0.5, -0.5]},
-            {label: "Z",  data: "Z data", vector: [-0.4, -0.6]},
-            {label: "AA",  data: "AA data", vector: [-0.3, -0.7]},
-            {label: "AB",  data: "AB data", vector: [-0.2, -0.8]},
-            {label: "AC",  data: "AC data", vector: [-0.1, -0.9]},
-            {label: "AD",  data: "AD data", vector: [0.0, -1.0]},
+
         ]
 
         const data = dogfood; 
+        //const data = testData; 
 
 
         let center = data[0].vector;
@@ -282,22 +285,27 @@ body {
         // draw the hierarchy
         let totalrotation = 0;
         const  drawnSoFar = [];
-        function drawHierarchy(hierarchy){
+        function drawHierarchy(hierarchy, chainTheta = 0, parentPoint = null){
+            chainTheta = hierarchy.chainTheta || chainTheta;
             //console.log("drawing hierarchy", hierarchy) 
             const vector = hierarchy;
             drawnSoFar.push(vector);
             const radius = vector.radius; 
-            const theta = vector.theta;
+            const theta = vector.theta + chainTheta;
             const point = {radius, theta, label: vector.label, cosine_similarity: vector.cosine_similarity, data: vector.data, vector: vector.vector};
             //console.log("drawing point", point) 
             drawPoint(point); 
+
+            if(parentPoint){
+                const line = {start: parentPoint, end: point};
+                drawLine(line); 
+            }
+
             if(vector.neighbors){
                 vector.neighbors.forEach((neighbor)=>{
-                    const line = {start: {radius, theta: theta}, end: {radius: neighbor.vector.radius, theta: neighbor.vector.theta}};
-                    drawLine(line);
                     // if not in drawnsofar, draw
                     if(!drawnSoFar.includes(neighbor.vector)){ 
-                        drawHierarchy(neighbor.vector);
+                        drawHierarchy(neighbor.vector, chainTheta, point);
                     }
                 });
             }
@@ -312,16 +320,14 @@ body {
             document.querySelector('.content.selected').innerHTML=`<span class="label">${point.label}</span><div class="data">r${point.radius.toFixed(2)}, θ${point.theta.toFixed(2)}</div><div class="cosine">cosine_similarity: ${point.cosine_similarity}</div><div class="data">${point.data}</div>`;
         }
         function doubleclickPoint(point){
-            let lastActivePoint = (hierarchy[0].cosine_similarity>=0.999999) ? hierarchy[0] : null;
-
 
             // write into the active content
             document.querySelector('.content.target').innerHTML=`<span class="label">${point.label}</span><div class="data">r${point.radius.toFixed(2)}, θ${point.theta.toFixed(2)}</div><div class="cosine">cosine_similarity: ${point.cosine_similarity}</div><div class="data">${point.data}</div>`;
 
             // compute a transition path
-            const path = [...interpolate_halves(center, point.vector, 5), point.vector];
+            const path = [...interpolate_halves(center, point.vector, 4), point.vector];
             const frames = path.length; 
-            const paththeta = [... interpolate_halves([0,1], [1,0], 5), point.theta].map(e=>e[0]*(point.theta - totalrotation) + totalrotation); 
+            const paththeta = [... interpolate_halves([0,1], [1,0], 4 ), point.theta].map(e=>e[0]*(point.theta - totalrotation) + totalrotation); 
             console.log("paththeta", paththeta);
             //const path = [...interpolate_linear(center, point.vector, 5), point.vector];
 
@@ -354,15 +360,6 @@ body {
                     hierarchy.forEach((hierarchy)=>{
                         drawHierarchy(hierarchy, 0, totalrotation); 
                     });
-                    if(lastActivePoint){
-                        // flatten hierarchy
-                        const flat = flattenHierarchy(hierarchy);
-                        const last = flat.find((e)=>e.label==lastActivePoint.label);
-                        const current = flat.find((e)=>e.label==point.label);
-                        const line = {start: {radius: last.radius, theta: (last.theta + totalrotation)%360 }, end: {radius: current.radius, theta: (current.theta + totalrotation)%360}};
-                        drawLine(line, ['dashed']); 
-                        console.log("drawing line", line, "from", last, "to", current); 
-                    }
 
                     i++;
                     requestAnimationFrame(animate);

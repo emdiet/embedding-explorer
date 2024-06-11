@@ -5,6 +5,7 @@ type RawVector = {
     timestamp?: number;
 };
 type OutVector = {
+    chainTheta?: number;
     label: string;
     data: string;
     vector: number[];
@@ -36,7 +37,7 @@ function createRibbonHierarchy(target: number[] , vectors: RawVector[]) {
             cosine_similarity: cosineSimilarity(vector.vector, v.vector),
             rank: j,
             vector: v
-        })).sort((a, b) => b.cosine_similarity - a.cosine_similarity).slice(1, 3);
+        })).sort((a, b) => b.cosine_similarity - a.cosine_similarity).slice(1, 4);
         vector.neighbors.push(...neighbors);
     }
 
@@ -59,7 +60,7 @@ function createRibbonHierarchy(target: number[] , vectors: RawVector[]) {
             const index = allVectors.indexOf(vector);
             allVectors.splice(index, 1);
             
-            vector.theta = prior.theta + (1-cosine_similarity) * 90; // todo: div by radius? depth?
+            vector.theta = prior.theta + (((1-cosine_similarity) * 90)*(1+Math.sin(vector.radius/180*Math.PI))); // todo: div by radius? depth?
 
             // dig deeper
             vector.neighbors.forEach(n => {
@@ -73,5 +74,12 @@ function createRibbonHierarchy(target: number[] , vectors: RawVector[]) {
             traverse(current, n.vector, n.cosine_similarity);
         });
     }
+
+    // spread out the chains
+    const chaincount = chains.length;
+    chains.forEach((chain, index) => {
+        chain.chainTheta = index * 360 / chaincount;
+    });
+
     return chains;
 }

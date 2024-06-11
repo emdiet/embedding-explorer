@@ -4,8 +4,7 @@ function createRibbonHierarchy(target, vectors) {
     const outVectors = vectors.map((rawVector, index) => {
         const cosine_similarity = cosineSimilarity(target, rawVector.vector);
         return Object.assign(Object.assign({}, rawVector), { cosine_similarity, radius: (1 - cosine_similarity) * 90, theta: 0, neighbors: [] });
-    })
-        .sort((a, b) => b.cosine_similarity - a.cosine_similarity);
+    });
     // for each outvector, compute cosine similairty with all other outvectors, and take top 2 - those will be the neighbors
     for (let i = 0; i < outVectors.length; i++) {
         const vector = outVectors[i];
@@ -13,7 +12,7 @@ function createRibbonHierarchy(target, vectors) {
             cosine_similarity: cosineSimilarity(vector.vector, v.vector),
             rank: j,
             vector: v
-        })).sort((a, b) => b.cosine_similarity - a.cosine_similarity).slice(1, 3);
+        })).sort((a, b) => b.cosine_similarity - a.cosine_similarity).slice(1, 4);
         vector.neighbors.push(...neighbors);
     }
     // find all chains of neighbors, making sure all vectors are included
@@ -31,7 +30,7 @@ function createRibbonHierarchy(target, vectors) {
             // remove from allvectors
             const index = allVectors.indexOf(vector);
             allVectors.splice(index, 1);
-            vector.theta = prior.theta + (1 - cosine_similarity) * 90; // todo: div by radius? depth?
+            vector.theta = prior.theta + (((1 - cosine_similarity) * 90) * (1 + Math.sin(vector.radius / 180 * Math.PI))); // todo: div by radius? depth?
             // dig deeper
             vector.neighbors.forEach(n => {
                 if (n.vector !== prior) {
@@ -43,6 +42,11 @@ function createRibbonHierarchy(target, vectors) {
             traverse(current, n.vector, n.cosine_similarity);
         });
     }
+    // spread out the chains
+    const chaincount = chains.length;
+    chains.forEach((chain, index) => {
+        chain.chainTheta = index * 360 / chaincount;
+    });
     return chains;
 }
 //# sourceMappingURL=ribbonhierarchy.js.map
