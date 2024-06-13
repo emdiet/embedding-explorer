@@ -72,7 +72,14 @@ body {
     left: 50%;
     background-color: transparent;
     border: 0.4cqw solid #B94909;
+    border: 0.1cqw dashed #B94909;
+    border-top: 0.4cqw solid #1ad209;
+    
     border-radius: 50%;
+}
+.circle.arc{
+    border: 0.1cqw dashed #B94909;
+    border-top: 0.4cqw solid #1ad209;
 }
 .circle>.label {
     position: absolute;
@@ -156,13 +163,22 @@ body {
 .line.dashed{
     border-top: 0.4cqw dashed #B94909;
 }
+#info{
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: #201F1E;
+    color: #B94909;
+    padding: 1%;
+    font-size: 3cqw;
+}
 
 
 </style>
 </head>
 <body>
     <div id="square">
-    
+    <div id="info">hpsi</div>
     </div>
     <div id="filler">
         <div class="content target">locked: none</div>
@@ -173,11 +189,38 @@ body {
     <script src="tools/ribbonhierarchy.js"></script>
     <script>
 
-        let rotθ=0;// around z axis
-        let rotφ=0;// around y axis
-        let rotψ=0;// around x axis
+        let rotθ=0;// theta around z axis
+        let rotφ=0;// phi around y axis
+        let rotψ=0;// psi around x axis
 
 
+        // on mouse down on square, horizontal movement changes θ, vertical movement changes φ
+        const square = document.getElementById('square');
+        let mousedown = false;
+        let lastX = 0;
+        let lastY = 0;
+        square.addEventListener('mousedown', (e)=>{
+            mousedown = true;
+            lastX = e.clientX;
+            lastY = e.clientY;
+        });
+        square.addEventListener('mouseup', (e)=>{
+            mousedown = false;
+        });
+        square.addEventListener('mousemove', (e)=>{
+            if(mousedown){
+                const dx = e.clientX - lastX;
+                const dy = e.clientY - lastY;
+                lastX = e.clientX;
+                lastY = e.clientY;
+                rotθ += dx*0.2;
+                rotφ += dy*0.2;
+            }
+        });
+        // mousewheel rotates ψ
+        square.addEventListener('wheel', (e)=>{
+            rotψ += e.deltaY*0.04;
+        });
 
 
         // setup
@@ -185,18 +228,43 @@ body {
             75, 90, 60, 45, 30, 15
         ]
         const max_width=80;
+        radii.forEach((radius, i)=>{
+            drawCircle(radius,0, 90 , 0, `radiusIndicator1-${radius}`);
+        });
 
         function drawCircle (radius,rotθ=0,rotφ=0,rotψ=0, id=null, classList=[]) {
 
+            //
             const found = id && document.getElementById(id);
             const circle= found || document.createElement('div');
-            const width = (polarToCartesian(radius, 90).top)*max_width;
-            console.log(width);
+            const size = (polarToCartesian(radius, 90).top)*max_width;
             circle.classList.add('circle');
-            circle.style.width=`${width}%`;
-            const radianrotφ = rotφ*Math.PI/180;
-            circle.style.height=`${Math.abs(width*Math.sin(radianrotφ))}%`;
-            circle.style.transform = `translate(-50%, -50%) rotateZ(${rotθ}deg)`;
+            circle.style.width=`${size}%`;
+
+            // φ rotation: 
+            // 0°: flat circle
+            // 0 => -90°: top goes back, bottom comes forward, box shrinks
+            // -90°: horizontal line
+            // -90 => -180°: flipped, top (now at bottom) comes forward, bottom (now at top) goes back, box expands
+            // -180°: flat circle (flipped)
+            // -180 => -270°: top goes back, bottom comes forward, box shrinks
+            // -270°: horizontal line
+            // -270 => -360°: flipped, top (now at bottom) comes forward, bottom (now at top) goes back, box expands
+            // -360°: flat circle
+            rotφ = rotφ<0?rotφ%360+360:rotφ%360;
+            let flip = rotφ>180;
+            if(flip){
+                rotφ = 360-rotφ;
+            }
+            const boxheight = Math.sin(rotφ*Math.PI/180)*size;
+            circle.style.height=`${boxheight}%`; 
+
+
+            circle.style.transform = [
+                `translate(-50%, -50%)`,
+                `rotateZ(${rotθ}deg)`,
+                flip ?`scaleY(-1)`:``
+            ].join('');
             circle.innerHTML=`<div class="label">${radius}°</div>`;
             circle.classList.add(...classList);
 
@@ -206,14 +274,21 @@ body {
             }
         };
 
+
+
+        let arclength = 0;
         function animate(){
-            rotθ= (rotθ+0.01);
-            rotφ= (rotφ+0.02);
-            rotψ= (rotψ+0.03 );
+            document.getElementById("info").innerHTML=`θ${rotθ.toFixed(2)}°, φ${rotφ.toFixed(2)}°, ψ${rotψ.toFixed(2)}°`;
+            // rotθ= (rotθ+0.01);
+            // rotφ= (rotφ+0.02);
+            // rotψ= (rotψ+0.03 );
             // document.getElementById('square').innerHTML='';
             radii.forEach((radius, i)=>{
-                drawCircle(radius, rotθ*radius, rotφ*radius, 0, `radiusIndicator-${radius}`);
+                drawCircle(radius, 0, rotφ, 0, `circle-${radius}`);
+                drawCircle(radius, rotθ, rotφ+90 , 0, `arc-${radius}`);
             });
+            //pause 1 sec then next frame
+            
             requestAnimationFrame(animate);
         }
         animate();
