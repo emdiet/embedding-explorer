@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Responsive Layout</title>
+<style>
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+#square {
+    background-color: #201F1E;
+    flex-shrink: 0;
+    container-type: inline-size;
+    container-name: square;
+}
+
+#filler {
+    background-color: blue;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.content {
+    margin: 10px;
+    background-color: white;
+    border: 1px solid black;
+}
+
+/* Landscape orientation */
+@media (orientation: landscape) {
+    body {
+        flex-direction: row;
+    }
+
+    #square {
+        width: calc(100vh); /* Subtracting margin or padding if any */
+        height: calc(100vh);
+    }
+
+    #filler {
+        width: calc(100vw - 100vh);
+        height: 100vh;
+    }
+}
+
+/* Portrait orientation */
+@media (orientation: portrait) {
+    #square {
+        width: 100vw;
+        height: 100vw; /* Same as the width to maintain square */
+    }
+
+    #filler {
+        height: calc(100vh - 100vw); /* Subtracting the height of the square */
+    }
+}
+
+.circle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    background-color: transparent;
+    border: 0.4cqw solid #B94909;
+    border-radius: 50%;
+}
+.circle>.label {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: translate(-50%, -50%);
+    background-color: #201F1E;
+    color: #B94909;
+    padding: 1%;
+    font-size: 3cqw;
+}
+.point{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 3%;
+    aspect-ratio: 1/1; 
+    background-color: #201F1E;
+    border: 0.4cqw solid #B94909;
+    border-radius: 50%;
+    z-index: 2;
+}
+.point:hover{
+    z-index: 3;
+    background-color: #B94909;
+    box-shadow: inset #201F1E 0 0 0 0.5cqw;
+}
+.point.clicked,
+.pont.clicked:hover{
+    z-index: 3;
+    background-color: #B94909;
+    box-shadow: none;
+}	
+.point>.label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: transparent;
+    color: #B94909;
+    padding: 1%;
+    font-size: 2cqw;
+}
+.point:hover>.label>div>div,
+.point.clicked>.label>div>div{
+    z-index: 3;
+    background-color: #201F1E;
+    text-decoration: underline;
+}
+.point>.label>div{
+    position: absolute;
+    white-space: nowrap;
+    transform-origin: 0 0;
+}
+.point>.label>div>div{
+    transform: translate(29%, -50%);
+    display: flex;
+    flex-direction: column;
+}
+.point>.label.flip>div>div{
+    flex-direction: column-reverse;
+}
+.point>.label.flip>div>div>div{
+    transform: rotate(180deg);
+    text-align: right;
+}
+    
+
+.point>.label>div>div>.name{
+    font-weight: bold;
+}
+.line{
+    position: absolute;
+    width: 0;
+    aspect-ratio: 1/1; 
+    background-color: transparent;
+    transform-origin: 0 0;
+    border-top: 0.4cqw solid #B94909;
+}
+.line.dashed{
+    border-top: 0.4cqw dashed #B94909;
+}
+
+
+</style>
+</head>
+<body>
+    <div id="square">
+    
+    </div>
+    <div id="filler">
+        <div class="content target">locked: none</div>
+        <div class="content selected">active: none</div>
+    </div>
+    <script src="dogfood.js"></script>
+    <script src="tools/hierarchy.js"></script>
+    <script src="tools/ribbonhierarchy.js"></script>
+    <script>
+
+        let rotθ=0;// around z axis
+        let rotφ=0;// around y axis
+        let rotψ=0;// around x axis
+
+
+
+
+        // setup
+        const radii=[
+            75, 90, 60, 45, 30, 15
+        ]
+        const max_width=80;
+
+        function drawCircle (radius,rotθ=0,rotφ=0,rotψ=0, id=null, classList=[]) {
+
+            const found = id && document.getElementById(id);
+            const circle= found || document.createElement('div');
+            const width = (polarToCartesian(radius, 90).top)*max_width;
+            console.log(width);
+            circle.classList.add('circle');
+            circle.style.width=`${width}%`;
+            const radianrotφ = rotφ*Math.PI/180;
+            circle.style.height=`${Math.abs(width*Math.sin(radianrotφ))}%`;
+            circle.style.transform = `translate(-50%, -50%) rotateZ(${rotθ}deg)`;
+            circle.innerHTML=`<div class="label">${radius}°</div>`;
+            circle.classList.add(...classList);
+
+            if(!found){
+                if(id) circle.id=id;
+                document.getElementById('square').appendChild(circle);
+            }
+        };
+
+        function animate(){
+            rotθ= (rotθ+0.01);
+            rotφ= (rotφ+0.02);
+            rotψ= (rotψ+0.03 );
+            // document.getElementById('square').innerHTML='';
+            radii.forEach((radius, i)=>{
+                drawCircle(radius, rotθ*radius, rotφ*radius, 0, `radiusIndicator-${radius}`);
+            });
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+
+
+        function drawLine (line, classList=[]) {
+            const line_div=document.createElement('div');
+            const {top: top1, left: left1} = polarToCartesian(line.start.radius, line.start.theta);
+            const {top: top2, left: left2} = polarToCartesian(line.end.radius, line.end.theta);
+            line_div.classList.add('line');
+            line_div.style.top=`${left1*0.5*max_width+50}%`;
+            line_div.style.left=`${top1*0.5*max_width+50}%`;
+            const width = Math.sqrt((top2-top1)**2+(left2-left1)**2)*0.5*max_width;
+            line_div.style.width=`${width}%`;
+            const localtheta = Math.atan2(left2-left1, top2-top1)*180/Math.PI;
+            line_div.style.transform = `rotate(${localtheta}deg) translate(0, -0.2cqw)`;
+            line_div.innerHTML=`<div class="actual"></div>`;
+            line_div.classList.add(...classList);
+            document.getElementById('square').appendChild(line_div);
+        };
+
+
+        function polarToCartesian(radius, theta){
+            // radius and theta in degrees
+            // returns top and left in percentage
+            // 0° radius would be 50% top and 50% left
+            // 90° radius would be max_width-50 top and 50% left
+
+            // convert theta and radius to radians
+            const theta_r=(theta-90)*Math.PI/180;
+            const radius_r=radius*Math.PI/180;
+
+            const radius_factor = Math.sin(radius_r);
+            //console.log("rf", radius_factor); 
+
+            const top = Math.cos(theta_r)*radius_factor;
+            const left = Math.sin(theta_r)*radius_factor;
+
+            return {
+                top: top,
+                left: left
+            }
+        }
+
+    </script>
+</body>
+</html>
