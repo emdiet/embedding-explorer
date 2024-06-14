@@ -103,6 +103,13 @@ body {
     border-radius: 50%;
     z-index: 2;
 }
+.point.shadow{
+    width: 1.5%;
+    
+}
+.point.shadow>.label{
+    display: none;
+}
 .point:hover{
     z-index: 3;
     background-color: #B94909;
@@ -233,7 +240,7 @@ body {
         ]
         const max_width=80;
         radii.forEach((radius, i)=>{
-            drawCircle(radius,0, 90 , 0, `radiusIndicator1-${radius}`);
+            //drawCircle(radius,0, 90 , 0, `radiusIndicator1-${radius}`);
         });
 
         function drawCircle (radius,rotθ=0,rotφ=0,rotψ=0, id=null, classList=[]) {
@@ -326,6 +333,11 @@ body {
             //compute z%
             const z =Math.sin(theta_r)*Math.sin(rotφ_r)*radius_px*azimuth_radius_top+Math.cos(rotφ_r)*radius_px*azimuth_altitude_px;
             point.style.zIndex = Math.round(z*1000+1000);
+            // if class contains "shadow", decrement z-index by 1000
+            if(classList.includes("shadow")){
+                point.style.zIndex = Math.round(z*1000+900);
+            }
+        
             
 
             // compute label transformation from top and left => angle
@@ -358,7 +370,6 @@ body {
             ]
         ];
 
-        let arclength = 0;
         function animate(){
             document.getElementById("info").innerHTML=`θ${rotθ.toFixed(2)}°, φ${rotφ.toFixed(2)}°, ψ${rotψ.toFixed(2)}°`;
             // rotθ= (rotθ+0.01);
@@ -375,6 +386,8 @@ body {
                 chain.forEach((point, j)=>{
                     const name = `point-${i}-${j}`;
                     const coord = drawPoint(point.radius, point.theta, point.azimuth, rotθ+rotψ, rotφ, 0, name);
+                    const shadow = drawPoint(point.radius, point.theta, 0, rotθ+rotψ, rotφ, 0, "shadow"+name, ["shadow"]);
+                    drawLine({start: shadow, end: coord}, "shadowline"+name, ['shadowline']);
                     if(priorcoord){
                         drawLine({start: priorcoord, end: coord}, priorname+"--"+name, ['dashed']);
                     }
