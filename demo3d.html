@@ -73,7 +73,7 @@ body {
     background-color: transparent;
     border: 0.4cqw solid #B94909;
     border: 0.1cqw dashed #B94909;
-    border-top: 0.4cqw solid #1ad209;
+    border-bottom: 0.4cqw solid #B94909;
     
     border-radius: 50%;
 }
@@ -190,7 +190,7 @@ body {
     <script>
 
         let rotθ=0;// theta around z axis
-        let rotφ=0;// phi around y axis
+        let rotφ=45;// phi around y axis
         let rotψ=0;// psi around x axis
 
 
@@ -251,30 +251,91 @@ body {
             // -270°: horizontal line
             // -270 => -360°: flipped, top (now at bottom) comes forward, bottom (now at top) goes back, box expands
             // -360°: flat circle
-            rotφ = rotφ<0?rotφ%360+360:rotφ%360;
+            rotφ = rotφ<0?rotφ%360+360:rotφ%360; 
             let flip = rotφ>180;
             if(flip){
                 rotφ = 360-rotφ;
             }
+            
             const boxheight = Math.sin(rotφ*Math.PI/180)*size;
             circle.style.height=`${boxheight}%`; 
 
 
             circle.style.transform = [
                 `translate(-50%, -50%)`,
-                `rotateZ(${rotθ}deg)`,
+                `rotateZ(${rotθ+rotψ }deg)`, 
                 flip ?`scaleY(-1)`:``
             ].join('');
-            circle.innerHTML=`<div class="label">${radius}°</div>`;
             circle.classList.add(...classList);
 
             if(!found){
                 if(id) circle.id=id;
+                circle.innerHTML=`<div class="inner"></div><div class="label${flip?" flip":""}">${radius}°</div>`;
                 document.getElementById('square').appendChild(circle);
             }
         };
 
 
+        function drawPoint (radius, theta, azimuth, rotθ=0,rotφ=0,rotψ=0, id=null, classList=[]) {
+            const found = id && document.getElementById(id);
+            const point= found || document.createElement('div');
+            const flip = false;
+            const pt = {
+                theta: theta,
+                azimuth: azimuth,
+                radius: radius, 
+                label: `point-${id}`
+            }
+            if(!found){
+                if(id) point.id=id;
+                point.classList.add('point');
+                point.innerHTML=`<div class="label"><div class="labelcont"><div><div class="name">${pt.label}</div><div class="coord">r${pt.radius.toFixed(2)}, θ${pt.theta.toFixed(2)}, φ${pt.azimuth.toFixed(2)}°</div></div></div></div>`;
+                document.getElementById('square').appendChild(point);
+                point.classList.add(...classList);
+            }
+            
+
+            const radius_px = polarToCartesian(radius, 90).top; // how far out from center
+            theta = theta + rotθ;
+            
+            
+            const theta_r = (theta+rotθ-90)*Math.PI/180; // how far around the circle
+            const azimuth_r = azimuth*Math.PI/180; // how far up from the plane
+
+
+            const rotθ_r = rotθ*Math.PI/180;
+            const rotφ_r = rotφ*Math.PI/180;
+            const rotψ_r = rotψ*Math.PI/180;
+
+            const azimuth_altitude_px = Math.sin(azimuth_r)*Math.cos(rotφ_r)*radius_px;  
+
+            // console.log("az", azimuth, azimuth_r, azimuth_altitude_px); 
+            const top = Math.cos(theta_r)*Math.sin(rotφ_r)*radius_px+azimuth_altitude_px;
+            const left = Math.sin(theta_r)*radius_px;
+            point.style.top=`${top*0.5*max_width+50}%`;
+            point.style.left=`${left*0.5*max_width+50}%`;
+            
+
+            // compute label transformation from top and left => angle
+            const labelAngle = Math.atan2(top, left)*180/Math.PI;
+            point.getElementsByClassName('labelcont')[0].style.transform = `rotate(${labelAngle}deg)`;    
+            // if left is negative, add or remove class "flip" from label
+            if(left<0){
+                point.getElementsByClassName('label')[0].classList.add('flip');
+            }else{
+                point.getElementsByClassName('label')[0].classList.remove('flip');
+            }
+            
+        };
+
+        const testPoints = [
+            {radius: 15, theta: 0, azimuth: 0},
+            {radius: 15, theta: 0, azimuth: 45},
+            {radius: 15, theta: 90, azimuth: 0},
+            {radius: 15, theta: 90, azimuth: 45},
+            {radius: 15, theta: 180, azimuth: 0},
+            {radius: 15, theta: 180, azimuth: -45},
+        ];
 
         let arclength = 0;
         function animate(){
@@ -285,7 +346,10 @@ body {
             // document.getElementById('square').innerHTML='';
             radii.forEach((radius, i)=>{
                 drawCircle(radius, 0, rotφ, 0, `circle-${radius}`);
-                drawCircle(radius, rotθ, rotφ+90 , 0, `arc-${radius}`);
+                //drawCircle(radius, rotθ, rotφ+90 , rotψ, `arc-${radius}`);
+            });
+            testPoints.forEach((point, i)=>{
+                drawPoint(point.radius, point.theta, point.azimuth, rotθ+rotψ, rotφ, 0, `point-${i}`);
             });
             //pause 1 sec then next frame
             
