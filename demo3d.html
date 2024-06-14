@@ -154,7 +154,6 @@ body {
 }
 .line{
     position: absolute;
-    width: 0;
     aspect-ratio: 1/1; 
     background-color: transparent;
     transform-origin: 0 0;
@@ -217,6 +216,11 @@ body {
                 rotφ += dy*0.2;
             }
         });
+        // if mouse leaves square while mousedown, stop moving
+        square.addEventListener('mouseleave', (e)=>{
+            mousedown = false;
+        });
+
         // mousewheel rotates ψ
         square.addEventListener('wheel', (e)=>{
             rotψ += e.deltaY*0.04;
@@ -279,7 +283,7 @@ body {
         function drawPoint (radius, theta, azimuth, rotθ=0,rotφ=0,rotψ=0, id=null, classList=[]) {
             const found = id && document.getElementById(id);
             const point= found || document.createElement('div');
-            const flip = false;
+            
             const pt = {
                 theta: theta,
                 azimuth: azimuth,
@@ -307,13 +311,21 @@ body {
             const rotφ_r = rotφ*Math.PI/180;
             const rotψ_r = rotψ*Math.PI/180;
 
-            const azimuth_altitude_px = Math.sin(azimuth_r)*Math.cos(rotφ_r)*radius_px;  
+            const azimuth_altitude_px = Math.sin(azimuth_r)*Math.cos(rotφ_r)*radius_px;
+             
+            const azimuth_radius_factor = (φ) => 1;
+            const azimuth_radius_left = azimuth_radius_factor(Math.cos(azimuth_r)); 
+            const azimuth_radius_top = azimuth_radius_factor(Math.cos(azimuth_r));
 
             // console.log("az", azimuth, azimuth_r, azimuth_altitude_px); 
-            const top = Math.cos(theta_r)*Math.sin(rotφ_r)*radius_px+azimuth_altitude_px;
-            const left = Math.sin(theta_r)*radius_px;
+            const top = Math.cos(theta_r)*Math.sin(rotφ_r)*radius_px*azimuth_radius_top-azimuth_altitude_px; 
+            const left = Math.sin(theta_r)*(radius_px)*azimuth_radius_left;
             point.style.top=`${top*0.5*max_width+50}%`;
             point.style.left=`${left*0.5*max_width+50}%`;
+
+            //compute z%
+            const z =Math.sin(theta_r)*Math.sin(rotφ_r)*radius_px*azimuth_radius_top+Math.cos(rotφ_r)*radius_px*azimuth_altitude_px;
+            point.style.zIndex = Math.round(z*1000+1000);
             
 
             // compute label transformation from top and left => angle
@@ -325,16 +337,25 @@ body {
             }else{
                 point.getElementsByClassName('label')[0].classList.remove('flip');
             }
-            
+
+            return {
+                top: top,
+                left: left,
+                z: z
+            }
         };
 
         const testPoints = [
-            {radius: 15, theta: 0, azimuth: 0},
-            {radius: 15, theta: 0, azimuth: 45},
-            {radius: 15, theta: 90, azimuth: 0},
-            {radius: 15, theta: 90, azimuth: 45},
-            {radius: 15, theta: 180, azimuth: 0},
-            {radius: 15, theta: 180, azimuth: -45},
+            [
+                {radius: 15, theta: 0, azimuth: 0},
+                {radius: 15, theta: 0, azimuth: 45},
+                {radius: 15, theta: 90, azimuth: 0},
+                {radius: 15, theta: 90, azimuth: 45},
+                {radius: 15, theta: 180, azimuth: 0},
+                {radius: 15, theta: 180, azimuth: -45},
+                {radius: 30, theta: 180, azimuth: 0},
+                {radius: 45, theta: 180, azimuth: 45},
+            ]
         ];
 
         let arclength = 0;
@@ -348,8 +369,19 @@ body {
                 drawCircle(radius, 0, rotφ, 0, `circle-${radius}`);
                 //drawCircle(radius, rotθ, rotφ+90 , rotψ, `arc-${radius}`);
             });
-            testPoints.forEach((point, i)=>{
-                drawPoint(point.radius, point.theta, point.azimuth, rotθ+rotψ, rotφ, 0, `point-${i}`);
+            testPoints.forEach((chain, i)=>{
+                let priorcoord = null;
+                let priorname = null;
+                chain.forEach((point, j)=>{
+                    const name = `point-${i}-${j}`;
+                    const coord = drawPoint(point.radius, point.theta, point.azimuth, rotθ+rotψ, rotφ, 0, name);
+                    if(priorcoord){
+                        drawLine({start: priorcoord, end: coord}, priorname+"--"+name, ['dashed']);
+                    }
+                    priorname = name;
+                    priorcoord = coord; 
+                });
+                
             });
             //pause 1 sec then next frame
             
@@ -359,20 +391,35 @@ body {
 
 
 
-        function drawLine (line, classList=[]) {
-            const line_div=document.createElement('div');
-            const {top: top1, left: left1} = polarToCartesian(line.start.radius, line.start.theta);
-            const {top: top2, left: left2} = polarToCartesian(line.end.radius, line.end.theta);
-            line_div.classList.add('line');
+        function drawLine (line, id, classList=[]) {
+            const found = id && document.getElementById(id);
+            const line_div= found || document.createElement('div');
+            if(!found){
+                if(id) line_div.id=id;
+                line_div.classList.add('line');
+                line_div.classList.add(...classList);
+                document.getElementById('square').appendChild(line_div);
+                line_div.innerHTML=`<div class="actual"></div>`;
+            }
+
+            const top1 = line.end.left;
+            const left1 = line.end.top;
+            const z1 = line.end.z;
+            const top2 = line.start.left;
+            const left2 = line.start.top;
+            const z2 = line.start.z;
+
             line_div.style.top=`${left1*0.5*max_width+50}%`;
             line_div.style.left=`${top1*0.5*max_width+50}%`;
+
+            // top*0.5*max_width+50
+            
             const width = Math.sqrt((top2-top1)**2+(left2-left1)**2)*0.5*max_width;
             line_div.style.width=`${width}%`;
+
             const localtheta = Math.atan2(left2-left1, top2-top1)*180/Math.PI;
             line_div.style.transform = `rotate(${localtheta}deg) translate(0, -0.2cqw)`;
-            line_div.innerHTML=`<div class="actual"></div>`;
-            line_div.classList.add(...classList);
-            document.getElementById('square').appendChild(line_div);
+            
         };
 
 
