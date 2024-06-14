@@ -240,6 +240,52 @@ body {
 
 
 
+        //-----------------------------INTERACTION-------------------//
+        let totalrotation = 0; 
+        function selectedPoint(point){
+            // write into the active content
+            document.querySelector('.content.selected').innerHTML=`<span class="label">${point.label}</span><div class="data">r${point.radius.toFixed(2)}, θ${point.theta.toFixed(2)}</div><div class="cosine">cosine_similarity: ${point.cosine_similarity}</div><div class="data">${point.data}</div>`;
+        }
+        function doubleclickPoint(point){
+
+            // write into the active content
+            document.querySelector('.content.target').innerHTML=`<span class="label">${point.label}</span><div class="data">r${point.radius.toFixed(2)}, θ${point.theta.toFixed(2)}</div><div class="cosine">cosine_similarity: ${point.cosine_similarity}</div><div class="data">${point.data}</div>`;
+
+            // compute a transition path
+            const path = [...interpolate_halves(center, point.vector, 4), point.vector];
+            const frames = path.length; 
+            const paththeta = [... interpolate_halves([0,1], [1,0], 4 ), point.theta].map(e=>e[0]*(point.theta - totalrotation) + totalrotation); 
+            console.log("paththeta", paththeta);
+            //const path = [...interpolate_linear(center, point.vector, 5), point.vector];
+
+
+            // request animation frame, then recompute hierarchy with new point, draw new hierarchy, and wait for next animation frame until last point is reached
+            let i = 0;
+            function animate(){
+                if(i<path.length){
+                    center = path[i];
+                    data.forEach(e => e.children=[])
+                    hierarchy = createRibbonHierarchy(  center, data);
+                    console.log("hierarchy", hierarchy);
+
+                    if(i>0 && (paththeta[i] - paththeta[i-1])){
+                        totalrotation = (totalrotation + paththeta[i] - paththeta[i-1])%360;
+                        console.log("totalrotation", totalrotation); 
+                    }
+                    
+                    animateHierarchy(hierarchy);
+                    
+
+                    i++;
+                    requestAnimationFrame(animate);
+                } else {
+                    // cleanup
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+
+
 
 
 
@@ -338,7 +384,7 @@ body {
         };
 
 
-        function drawPoint (radius, theta, azimuth, rotθ=0,rotφ=0,rotψ=0, id=null, classList=[]) {
+        function drawPoint (radius, theta, azimuth, rotθ=0,rotφ=0,rotψ=0, id=null, classList=[], data=null) {
             const found = id && document.getElementById(id);
             const point= found || document.createElement('div');
             
@@ -346,7 +392,8 @@ body {
                 theta: theta,
                 azimuth: azimuth,
                 radius: radius, 
-                label: `point-${id}`
+                label: `${id}`,
+                ...data
             }
             if(!found){
                 if(id) point.id=id;
@@ -401,6 +448,32 @@ body {
                 point.getElementsByClassName('label')[0].classList.remove('flip');
             }
 
+            //-----------------------EV LISTENERS------------------------//
+
+            // point clicked toggle "clicked" class
+            let lastClick = 0;
+            point.addEventListener('click', function() {
+                // remove clicked from any other point that isnt this
+                document.querySelectorAll('.point').forEach((point)=>{
+                    if(point!=this){
+                        point.classList.remove('clicked');
+                    }
+                });
+
+                // double click
+                const now = new Date().getTime();
+                const timesince = now - lastClick;
+                lastClick = now;
+                if(timesince<300){
+                    doubleclickPoint(pt);
+                } else {
+                    this.classList.toggle('clicked');
+                    selectedPoint(pt);
+                }
+            });
+
+            //----------------------------RETURN-----------------------//
+
             return {
                 top: top,
                 left: left,
@@ -423,7 +496,8 @@ body {
             hierarchy=__hierarchy;
 
             let drawnInBatch = [];
-            function drawHierarchy(hierarchyNode, parentcoord){
+            function drawHierarchy(hierarchyNode, parentcoord, chainTheta=0){
+                chainTheta = hierarchyNode.chainTheta || chainTheta;
                 if(drawnInBatch.includes(hierarchyNode)){
                     if(parentcoord){
                         // sort parentcord and hierarchynode label
@@ -440,18 +514,18 @@ body {
                     hierarchyNode.azimuth = hierarchyNode.theta;
                 }
 
-                const coords = drawPoint(hierarchyNode.radius, hierarchyNode.theta, hierarchyNode.azimuth, rotθ+rotψ, rotφ, 0, name);
-                const shadow = drawPoint(hierarchyNode.radius, hierarchyNode.theta, 0, rotθ+rotψ, rotφ, 0, "shadow"+name, ["shadow"]);
+                const coords = drawPoint(hierarchyNode.radius, hierarchyNode.theta+chainTheta, hierarchyNode.azimuth, rotθ+rotψ, rotφ, 0, name, [], hierarchyNode);
+                const shadow = drawPoint(hierarchyNode.radius, hierarchyNode.theta+chainTheta, 0, rotθ+rotψ, rotφ, 0, "shadow"+name, ["shadow"], hierarchyNode);
                 drawLine({start: shadow, end: coords}, "shadowline-"+name, ['shadowline']);
                 hierarchyNode.coords = coords;
 
                 if(parentcoord){
-                    drawLine({start: parentcoord, end: coords}, `line-${name}`, ['dashed']);
+                    drawLine({start: parentcoord, end: coords}, `line-${name}`, ['normal']);
                 }
 
                 if(hierarchyNode.neighbors){
                     hierarchyNode.neighbors.forEach((neighbor, i)=>{
-                        drawHierarchy(neighbor.vector, coords);
+                        drawHierarchy(neighbor.vector, coords, chainTheta);
                     });
                 } 
 
@@ -465,7 +539,7 @@ body {
         }
         animateHierarchy(hierarchy);
 
-        function animate(){
+        function __animate(){
             document.getElementById("info").innerHTML=`θ${rotθ.toFixed(2)}°, φ${rotφ.toFixed(2)}°, ψ${rotψ.toFixed(2)}°`;
             // rotθ= (rotθ+0.01);
             // rotφ= (rotφ+0.02);
@@ -475,9 +549,9 @@ body {
                 drawCircle(radius, 0, rotφ, 0, `circle-${radius}`);
                 //drawCircle(radius, rotθ, rotφ+90 , rotψ, `arc-${radius}`);
             });
-            requestAnimationFrame(animate);
+            requestAnimationFrame(__animate);
         }
-        animate();
+        __animate();
 
 
 
