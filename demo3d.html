@@ -246,43 +246,44 @@ body {
             // write into the active content
             document.querySelector('.content.selected').innerHTML=`<span class="label">${point.label}</span><div class="data">r${point.radius.toFixed(2)}, θ${point.theta.toFixed(2)}</div><div class="cosine">cosine_similarity: ${point.cosine_similarity}</div><div class="data">${point.data}</div>`;
         }
+        let active = false;
+        let cancel = false;
         function doubleclickPoint(point){
+            if(active){
+                cancel = true;
+                return;
+            }
 
             // write into the active content
             document.querySelector('.content.target').innerHTML=`<span class="label">${point.label}</span><div class="data">r${point.radius.toFixed(2)}, θ${point.theta.toFixed(2)}</div><div class="cosine">cosine_similarity: ${point.cosine_similarity}</div><div class="data">${point.data}</div>`;
 
             // compute a transition path
-            const path = [...interpolate_halves(center, point.vector, 4), point.vector];
+            const path = [...interpolate_halves(center, point.vector, 3), point.vector];
             const frames = path.length; 
-            const paththeta = [... interpolate_halves([0,1], [1,0], 4 ), point.theta].map(e=>e[0]*(point.theta - totalrotation) + totalrotation); 
-            console.log("paththeta", paththeta);
             //const path = [...interpolate_linear(center, point.vector, 5), point.vector];
 
 
             // request animation frame, then recompute hierarchy with new point, draw new hierarchy, and wait for next animation frame until last point is reached
             let i = 0;
-            function animate(){
-                if(i<path.length){
+            
+            function _1_animate(){
+                if(!cancel && i<path.length){
                     center = path[i];
                     data.forEach(e => e.children=[])
                     hierarchy = createRibbonHierarchy(  center, data);
                     console.log("hierarchy", hierarchy);
-
-                    if(i>0 && (paththeta[i] - paththeta[i-1])){
-                        totalrotation = (totalrotation + paththeta[i] - paththeta[i-1])%360;
-                        console.log("totalrotation", totalrotation); 
-                    }
                     
                     animateHierarchy(hierarchy);
                     
-
                     i++;
-                    requestAnimationFrame(animate);
+                    requestAnimationFrame(_1_animate); 
                 } else {
                     // cleanup
+                    active = false;
+                    cancel = false;
                 }
-            }
-            requestAnimationFrame(animate);
+            } 
+            _1_animate();
         }
 
 
@@ -459,6 +460,7 @@ body {
                         point.classList.remove('clicked');
                     }
                 });
+                return; 
 
                 // double click
                 const now = new Date().getTime();
@@ -492,8 +494,23 @@ body {
             __active = true;
             requestAnimationFrame(__animateHierarchy);
         }
+        __previous_ha_rotθ=null;
+        __previous_ha_rotφ=null;
+        __previous_ha_rotψ=null;
+        __previous_ha_hierarchy=null;
         function __animateHierarchy(){
             hierarchy=__hierarchy;
+
+            // check if anything actually changed, if not, return
+            if(__previous_ha_rotθ==rotθ && __previous_ha_rotφ==rotφ && __previous_ha_rotψ==rotψ && __previous_ha_hierarchy==hierarchy){
+                requestAnimationFrame(__animateHierarchy);
+                return;
+            } else {
+                __previous_ha_rotθ=rotθ;
+                __previous_ha_rotφ=rotφ;
+                __previous_ha_rotψ=rotψ;
+                __previous_ha_hierarchy=hierarchy;
+            }
 
             let drawnInBatch = [];
             function drawHierarchy(hierarchyNode, parentcoord, chainTheta=0){
@@ -539,16 +556,28 @@ body {
         }
         animateHierarchy(hierarchy);
 
+        __previous_rotθ=null;
+        __previous_rotφ=null;
+        __previous_rotψ=null;
         function __animate(){
-            document.getElementById("info").innerHTML=`θ${rotθ.toFixed(2)}°, φ${rotφ.toFixed(2)}°, ψ${rotψ.toFixed(2)}°`;
-            // rotθ= (rotθ+0.01);
-            // rotφ= (rotφ+0.02);
-            // rotψ= (rotψ+0.03 );
-            // document.getElementById('square').innerHTML='';
-            radii.forEach((radius, i)=>{
-                drawCircle(radius, 0, rotφ, 0, `circle-${radius}`);
-                //drawCircle(radius, rotθ, rotφ+90 , rotψ, `arc-${radius}`);
-            });
+
+            if(__previous_rotθ!=rotθ || __previous_rotφ!=rotφ || __previous_rotψ!=rotψ){
+                __previous_rotθ=rotθ;
+                __previous_rotφ=rotφ;
+                __previous_rotψ=rotψ;
+                document.getElementById("info").innerHTML=`θ${rotθ.toFixed(2)}°, φ${rotφ.toFixed(2)}°, ψ${rotψ.toFixed(2)}°`;
+                // rotθ= (rotθ+0.01);
+                // rotφ= (rotφ+0.02);
+                // rotψ= (rotψ+0.03 );
+                // document.getElementById('square').innerHTML='';
+                radii.forEach((radius, i)=>{
+                    drawCircle(radius, 0, rotφ, 0, `circle-${radius}`);
+                    //drawCircle(radius, rotθ, rotφ+90 , rotψ, `arc-${radius}`);
+                });
+            }
+
+
+
             requestAnimationFrame(__animate);
         }
         __animate();
