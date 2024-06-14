@@ -127,7 +127,7 @@ body {
     left: 50%;
     transform: translate(-50%, -50%);
     background-color: transparent;
-    color: #B94909;
+    color: #b94a0986;
     padding: 1%;
     font-size: 2cqw;
 }
@@ -135,6 +135,7 @@ body {
 .point.clicked>.label>div>div{
     z-index: 3;
     background-color: #201F1E;
+    color: #B94909;
     text-decoration: underline;
 }
 .point>.label>div{
@@ -169,6 +170,9 @@ body {
 .line.dashed{
     border-top: 0.4cqw dashed #B94909;
 }
+.line.shadowline{
+    border-top: 0.1cqw dashed #B94909;
+}
 #info{
     position: absolute;
     top: 0;
@@ -194,6 +198,53 @@ body {
     <script src="tools/hierarchy.js"></script>
     <script src="tools/ribbonhierarchy.js"></script>
     <script>
+        //------------------------------DATA----------------------//
+        // dogfood is a little screwed up, so we need to fix it
+        dogfood.forEach((item, i)=>{
+             item.vector = item.vector[0]
+        });
+        console.log(dogfood[5]);
+        //const data = dogfood.slice(15);
+        window.dogfood = dogfood;
+        window.buildHierarchyCorrectedAndSorted = buildHierarchyCorrectedAndSorted;
+        window.createRibbonHierarchy = createRibbonHierarchy;
+
+        // test:
+        testData = [
+            {label: "A",  data: "A data", vector: [0, 0 , 0, 1], timestamp: 0},
+            {label: "B",  data: "B data", vector: [0, 0 , 1, 0], timestamp: 0},
+            {label: "C",  data: "C data", vector: [0, 1 , 0, 0], timestamp: 0},
+            {label: "D",  data: "D data", vector: [1, 0 , 0, 0], timestamp: 0},
+        ]
+
+        const data = dogfood; 
+        // const data = testData;  
+
+
+        let center = data[0].vector;
+        let targetTheta = 90;
+        let hierarchy = createRibbonHierarchy( center, data);
+        console.log("hierarchy", hierarchy);
+
+
+        // set up sidebar
+        data.forEach((item, i)=>{
+            const content = document.createElement('div');
+            content.classList.add('content');
+            content.innerHTML=`<span class="label">${item.label}</span><div class="data">${item.data}</div>`;
+            document.getElementById('filler').appendChild(content);
+        });
+
+
+
+
+
+
+
+
+
+
+        //---------------------------------DRAWING--------------------//
 
         let rotθ=0;// theta around z axis
         let rotφ=45;// phi around y axis
@@ -357,18 +408,62 @@ body {
             }
         };
 
-        const testPoints = [
-            [
-                {radius: 15, theta: 0, azimuth: 0},
-                {radius: 15, theta: 0, azimuth: 45},
-                {radius: 15, theta: 90, azimuth: 0},
-                {radius: 15, theta: 90, azimuth: 45},
-                {radius: 15, theta: 180, azimuth: 0},
-                {radius: 15, theta: 180, azimuth: -45},
-                {radius: 30, theta: 180, azimuth: 0},
-                {radius: 45, theta: 180, azimuth: 45},
-            ]
-        ];
+        console.log(hierarchy);
+        __active = false;
+        __hierarchy = null;
+        function animateHierarchy(hierarchy){
+            __hierarchy = hierarchy;
+            if(__active){
+                return;
+            }
+            __active = true;
+            requestAnimationFrame(__animateHierarchy);
+        }
+        function __animateHierarchy(){
+            hierarchy=__hierarchy;
+
+            let drawnInBatch = [];
+            function drawHierarchy(hierarchyNode, parentcoord){
+                if(drawnInBatch.includes(hierarchyNode)){
+                    if(parentcoord){
+                        // sort parentcord and hierarchynode label
+                        const assignedid = [parentcoord.label, hierarchyNode.label].sort().join('-');
+                        drawLine({start: parentcoord, end: hierarchyNode.coords}, `line-${assignedid}`, ['dashed']);
+                    }
+                    return;
+                }
+                drawnInBatch.push(hierarchyNode);
+                const name = hierarchyNode.label;
+
+                // if hierarchynode azimuth not defined, set to theta
+                if(hierarchyNode.azimuth===undefined){
+                    hierarchyNode.azimuth = hierarchyNode.theta;
+                }
+
+                const coords = drawPoint(hierarchyNode.radius, hierarchyNode.theta, hierarchyNode.azimuth, rotθ+rotψ, rotφ, 0, name);
+                const shadow = drawPoint(hierarchyNode.radius, hierarchyNode.theta, 0, rotθ+rotψ, rotφ, 0, "shadow"+name, ["shadow"]);
+                drawLine({start: shadow, end: coords}, "shadowline-"+name, ['shadowline']);
+                hierarchyNode.coords = coords;
+
+                if(parentcoord){
+                    drawLine({start: parentcoord, end: coords}, `line-${name}`, ['dashed']);
+                }
+
+                if(hierarchyNode.neighbors){
+                    hierarchyNode.neighbors.forEach((neighbor, i)=>{
+                        drawHierarchy(neighbor.vector, coords);
+                    });
+                } 
+
+
+            }
+            hierarchy.forEach((node, i)=> {
+                drawHierarchy(node, null);
+            });
+
+            requestAnimationFrame(__animateHierarchy);
+        }
+        animateHierarchy(hierarchy);
 
         function animate(){
             document.getElementById("info").innerHTML=`θ${rotθ.toFixed(2)}°, φ${rotφ.toFixed(2)}°, ψ${rotψ.toFixed(2)}°`;
@@ -380,24 +475,6 @@ body {
                 drawCircle(radius, 0, rotφ, 0, `circle-${radius}`);
                 //drawCircle(radius, rotθ, rotφ+90 , rotψ, `arc-${radius}`);
             });
-            testPoints.forEach((chain, i)=>{
-                let priorcoord = null;
-                let priorname = null;
-                chain.forEach((point, j)=>{
-                    const name = `point-${i}-${j}`;
-                    const coord = drawPoint(point.radius, point.theta, point.azimuth, rotθ+rotψ, rotφ, 0, name);
-                    const shadow = drawPoint(point.radius, point.theta, 0, rotθ+rotψ, rotφ, 0, "shadow"+name, ["shadow"]);
-                    drawLine({start: shadow, end: coord}, "shadowline"+name, ['shadowline']);
-                    if(priorcoord){
-                        drawLine({start: priorcoord, end: coord}, priorname+"--"+name, ['dashed']);
-                    }
-                    priorname = name;
-                    priorcoord = coord; 
-                });
-                
-            });
-            //pause 1 sec then next frame
-            
             requestAnimationFrame(animate);
         }
         animate();
@@ -431,7 +508,13 @@ body {
             line_div.style.width=`${width}%`;
 
             const localtheta = Math.atan2(left2-left1, top2-top1)*180/Math.PI;
-            line_div.style.transform = `rotate(${localtheta}deg) translate(0, -0.2cqw)`;
+            //if classlist contains shadow
+            if(classList.includes("shadow")){
+                line_div.style.transform = `rotate(${localtheta}deg) translate(0, -0.05cqw)`;
+            } else {
+                line_div.style.transform = `rotate(${localtheta}deg) translate(0, -0.2cqw)`;
+            }
+
             
         };
 
